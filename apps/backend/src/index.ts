@@ -18,6 +18,6 @@ export const app = new Elysia()
   })
   .use([cors, openapi, authController, usersController])
   .get("", redirect("/docs"))
-  .listen(process.env.PORT ?? 3000);
+  .listen(process.env?.PORT ?? 3000);
 
-console.log(`Listening at ${app.server!.url}`);
+console.log(`Listening at ${app.server?.url}`);
