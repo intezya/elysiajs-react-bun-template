@@ -25,7 +25,7 @@ export const authRegisterController = new Elysia({
         set.status = "No Content";
       } catch (error) {
         if (error instanceof AuthRegisterConflictError) {
-          return status("Conflict", error);
+          return status("Conflict", error as unknown);
         }
         return status("Bad Request", error);
       }

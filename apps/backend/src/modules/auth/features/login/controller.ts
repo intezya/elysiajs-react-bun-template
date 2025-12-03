@@ -25,7 +25,7 @@ export const authLoginController = new Elysia({
         set.status = "No Content";
       } catch (error) {
         if (error instanceof AuthLoginInvalidCredentialsError) {
-          return status("Unauthorized", error);
+          return status("Unauthorized", error as never);
         }
         return status("Bad Request", error);
       }
