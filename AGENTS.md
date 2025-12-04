@@ -1,36 +1,35 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- Monorepo managed by Bun workspaces; apps live in `apps/backend` and `apps/frontend`.
-- Backend (Elysia + Drizzle) entry point: `apps/backend/src/index.ts`; feature controllers under `src/modules/<feature>`, shared middleware/config in `src/shared`, migrations configured via `drizzle.config.ts` and run from `scripts/migrate.ts`.
-- Frontend (React + Bun serve) entry: `apps/frontend/src/app/index.html`; pages/components in `src/pages` and `src/shared`; dev server logic in `scripts/serve.ts`.
-- Repo-level tooling lives beside `biome.json` and per-app `tsconfig.json`; extra notes in `docs/`.
+- Monorepo on Bun workspaces: `apps/backend` (Elysia + Drizzle) and `apps/frontend` (React served by Bun).
+- Backend layout: domain tables/repos in `src/domain/<entity>`, business logic in `src/services`, HTTP layer in `src/controllers` (routes + contracts + macros), infra helpers in `src/http/plugins`, DB wiring/migrations in `src/db`, entrypoint `src/index.ts`.
+- Frontend: entry `apps/frontend/src/app/index.html`, pages/components in `src/pages` and `src/shared`, dev server `scripts/serve.ts`.
+- Tooling lives at repo root (`biome.json`, `tsconfig.json` per app).
 
 ## Setup
-- Install everything once: `bun install` (copies `.env.example` to `.env` in each app; fill real values before running).
-- Start a database before migrations; adjust connection info in the backend `.env`.
-- Apply schema updates when models change: `bun run --filter @acme/backend migrate`.
+- Install once: `bun install` (copies `.env.example` to `.env` in each app).
+- Configure DB URL in `apps/backend/.env`; Bun SQLite by default.
+- Auto migrations: backend startup runs `drizzle-kit generate` + `migrate` when `AUTO_MIGRATE=true` (default) and `AUTO_GENERATE_MIGRATIONS=true` (default in dev). Disable via env flags if you prefer manual control.
 
 ## Build, Test, and Development Commands
-- Run both apps in watch mode: `bun run dev` (backend on 3000, frontend on 8000 by default).
-- Target one app: `bun run --filter @acme/backend dev` or `bun run --filter @acme/frontend dev`.
-- Build the frontend bundle: `bun run --filter @acme/frontend build`.
-- Quality gates: `bun run format` (Biome format), `bun run lint` (Biome lint), `bun run tsc` (type-check all workspaces). Clean artifacts: `bun run clean`.
+- Dev all: `bun run dev` (backend 3000, frontend 8000).
+- Dev single app: `bun run --filter @acme/backend dev` or `bun run --filter @acme/frontend dev`.
+- Build frontend: `bun run --filter @acme/frontend build`.
+- Quality: `bun run format`, `bun run lint`, `bun run tsc`. Clean: `bun run clean`. Manual migration apply: `bun run --filter @acme/backend migrate`.
 
 ## Coding Style & Naming Conventions
-- Biome enforces 2-space indent, LF endings, 80-char lines, double quotes, semicolons, and trailing commas.
-- Keep imports sorted; prefer `@acme/backend/*` and `@acme/frontend/*` aliases over deep relative paths.
-- TypeScript is strict—type controllers, route models, and shared utilities; name modules by feature (`auth`, `users`, etc.) and keep files small.
+- Biome: 2 spaces, LF, 80 cols, double quotes, semicolons, trailing commas, sorted imports.
+- Prefer `@acme/backend/*` and `@acme/frontend/*` aliases over deep relatives.
+- Organize features by entity: table + repository in `domain`, service in `services`, controller in `controllers`; colocate contracts/macros with the controller for quick edits.
 
 ## Testing Guidelines
-- No automated suite yet; when adding tests, use Bun’s `bun test` with `*.test.ts` colocated with the module under test.
-- Cover route handlers and shared utilities; stub external services and avoid real network calls in unit tests.
+- No suite yet; add `bun test` with `*.test.ts` near the code under test.
+- Focus on services and controllers; stub external calls, avoid network in unit tests.
 
 ## Commit & Pull Request Guidelines
-- Match the existing short, imperative commit style (e.g., `Improve docs`, `Fix errors`); keep each commit focused.
-- Before a PR, run `bun run format`, `bun run lint`, and `bun run tsc`; note migrations and new env vars; attach screenshots for UI changes and link related issues.
-- Mention port changes (3000 backend, 8000 frontend) or breaking API shifts in the PR description.
+- Use short, imperative commits (e.g., `Improve docs`, `Add user lookup`).
+- Before PR: run `bun run format`, `bun run lint`, `bun run tsc`; call out new env vars and migration impacts; attach screenshots for UI tweaks; link issues.
 
 ## Security & Configuration Tips
-- Never commit `.env` files or secrets; rotate any shared local keys.
-- Keep CORS/OpenAPI settings in `apps/backend/src/shared` aligned with allowed origins; avoid broadening them without review.
+- Do not commit `.env` or secrets; rotate local keys regularly.
+- Review JWT secret/CORS in `apps/backend/src/http/plugins` before widening origins; keep AUTO_GENERATE_MIGRATIONS off in prod-like environments.
